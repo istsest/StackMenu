@@ -1,7 +1,9 @@
 Stack Menu looks like Mac OS X.
 ==========================
 
-<iframe width="420" height="315" src="http://www.youtube.com/embed/xwepfN18pjU" frameborder="0" allowfullscreen></iframe>
+[Sample Video](http://youtu.be/xwepfN18pjU)
+
+![Alt text](/main.png)
 
 <pre><code>
 - (IBAction)stackMenu:(id)sender
