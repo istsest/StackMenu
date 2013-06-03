@@ -49,43 +49,52 @@
 - (IBAction)stackMenu2:(id)sender
 {
 	UIButton *button = (UIButton *)sender;
-	[PCStackMenu showStackMenuWithTitles:[NSArray arrayWithObjects:@"Setting", @"Search", @"Twitter", @"Message", @"Share", @"More ...", nil]
-							  withImages:[NSArray arrayWithObjects:[UIImage imageNamed:@"gear@2x.png"], [UIImage imageNamed:@"magnifier@2x.png"], [UIImage imageNamed:@"twitter@2x.png"], [UIImage imageNamed:@"speech@2x.png"], [UIImage imageNamed:@"actions@2x"], nil]
-							atStartPoint:CGPointMake(button.frame.origin.x, button.frame.origin.y)
-								  inView:self.view
-							  itemHeight:40
-						   menuDirection:PCStackMenuDirectionCounterClockWiseUp
-							onSelectMenu:^(NSInteger selectedMenuIndex) {
-								NSLog(@"menu index : %d", selectedMenuIndex);
-							}];
+	PCStackMenu *stackMenu = [[PCStackMenu alloc] initWithTitles:[NSArray arrayWithObjects:@"Setting", @"Search", @"Twitter", @"Message", @"Share", @"More ...", nil]
+													  withImages:[NSArray arrayWithObjects:[UIImage imageNamed:@"gear@2x.png"], [UIImage imageNamed:@"magnifier@2x.png"], [UIImage imageNamed:@"twitter@2x.png"], [UIImage imageNamed:@"speech@2x.png"], [UIImage imageNamed:@"actions@2x"], nil]
+													atStartPoint:CGPointMake(button.frame.origin.x, button.frame.origin.y)
+														  inView:self.view
+													  itemHeight:40
+												   menuDirection:PCStackMenuDirectionCounterClockWiseUp];
+	for(PCStackMenuItem *item in stackMenu.items)
+		item.stackTitleLabel.textColor = [UIColor yellowColor];
+				
+	[stackMenu show:^(NSInteger selectedMenuIndex) {
+		NSLog(@"menu index : %d", selectedMenuIndex);
+	}];
 }
 
 - (IBAction)stackMenu3:(id)sender
 {
 	UIButton *button = (UIButton *)sender;
-	[PCStackMenu showStackMenuWithTitles:[NSArray arrayWithObjects:@"Setting", @"Search", @"Twitter", @"Message", @"Share", @"More ...", nil]
-							  withImages:[NSArray arrayWithObjects:[UIImage imageNamed:@"gear@2x.png"], [UIImage imageNamed:@"magnifier@2x.png"], [UIImage imageNamed:@"twitter@2x.png"], [UIImage imageNamed:@"speech@2x.png"], [UIImage imageNamed:@"actions@2x"], nil]
-							atStartPoint:CGPointMake(button.frame.origin.x, button.frame.origin.y + button.frame.size.height)
-								  inView:self.view
-							  itemHeight:40
-						   menuDirection:PCStackMenuDirectionClockWiseDown
-							onSelectMenu:^(NSInteger selectedMenuIndex) {
-								NSLog(@"menu index : %d", selectedMenuIndex);
-							}];
+	PCStackMenu *stackMenu = [[PCStackMenu alloc] initWithTitles:[NSArray arrayWithObjects:@"Setting", @"Search", @"Twitter", @"Message", @"Share", @"More ...", nil]
+													  withImages:[NSArray arrayWithObjects:[UIImage imageNamed:@"gear@2x.png"], [UIImage imageNamed:@"magnifier@2x.png"], [UIImage imageNamed:@"twitter@2x.png"], [UIImage imageNamed:@"speech@2x.png"], [UIImage imageNamed:@"actions@2x"], nil]
+													atStartPoint:CGPointMake(button.frame.origin.x, button.frame.origin.y + button.frame.size.height)
+														  inView:self.view
+													  itemHeight:40
+												   menuDirection:PCStackMenuDirectionClockWiseDown];
+	for(PCStackMenuItem *item in stackMenu.items)
+		item.stackTitleLabel.textColor = [UIColor greenColor];
+	
+	[stackMenu show:^(NSInteger selectedMenuIndex) {
+		NSLog(@"menu index : %d", selectedMenuIndex);
+	}];
 }
 
 - (IBAction)stackMenu4:(id)sender
 {
 	UIButton *button = (UIButton *)sender;
-	[PCStackMenu showStackMenuWithTitles:[NSArray arrayWithObjects:@"Setting", @"Search", @"Twitter", @"Message", @"Share", @"More ...", nil]
-							  withImages:[NSArray arrayWithObjects:[UIImage imageNamed:@"gear@2x.png"], [UIImage imageNamed:@"magnifier@2x.png"], [UIImage imageNamed:@"twitter@2x.png"], [UIImage imageNamed:@"speech@2x.png"], [UIImage imageNamed:@"actions@2x"], nil]
-							atStartPoint:CGPointMake(button.frame.origin.x + button.frame.size.width, button.frame.origin.y + button.frame.size.height)
-								  inView:self.view
-							  itemHeight:40
-						   menuDirection:PCStackMenuDirectionCounterClockWiseDown
-							onSelectMenu:^(NSInteger selectedMenuIndex) {
-								NSLog(@"menu index : %d", selectedMenuIndex);
-							}];
+	PCStackMenu *stackMenu = [[PCStackMenu alloc] initWithTitles:[NSArray arrayWithObjects:@"Setting", @"Search", @"Twitter", @"Message", @"Share", @"More ...", nil]
+													  withImages:[NSArray arrayWithObjects:[UIImage imageNamed:@"gear@2x.png"], [UIImage imageNamed:@"magnifier@2x.png"], [UIImage imageNamed:@"twitter@2x.png"], [UIImage imageNamed:@"speech@2x.png"], [UIImage imageNamed:@"actions@2x"], nil]
+													atStartPoint:CGPointMake(button.frame.origin.x + button.frame.size.width, button.frame.origin.y + button.frame.size.height)
+														  inView:self.view
+													  itemHeight:40
+												   menuDirection:PCStackMenuDirectionCounterClockWiseDown];
+	for(PCStackMenuItem *item in stackMenu.items)
+		item.stackTitleLabel.textColor = [UIColor cyanColor];
+	
+	[stackMenu show:^(NSInteger selectedMenuIndex) {
+		NSLog(@"menu index : %d", selectedMenuIndex);
+	}];
 }
 
 @end
