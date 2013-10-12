@@ -179,8 +179,7 @@
 		} completion:^(BOOL finished) {
 			if(_block)
 				_block(selectedIndex);
-			_overlayWindow = nil;
-			_block = nil;
+			[self releaseMenu];
 		}];
     }];
 }
@@ -200,9 +199,15 @@
 			stackItem.alpha = 0.2;
 		}
     } completion:^(BOOL finished) {
-		_block = nil;
-		_overlayWindow = nil;
+		[self releaseMenu];
     }];
+}
+
+- (void)releaseMenu
+{
+	_block = nil;
+	_overlayWindow = nil;
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 
@@ -226,20 +231,30 @@
 					 itemHeight:(CGFloat)itemHeight
 				  menuDirection:(PCStackMenuDirection)direction
 {
-	self = [self initWithFrame:[UIScreen mainScreen].bounds];
+	CGRect rect = [UIScreen mainScreen].bounds;
+	self = [self initWithFrame:rect];
 	_menuDirection = direction;
 	
 	int max = MAX([titles count], [images count]);
 	for(int i = 0; i < max; i++)
 	{
-		CGRect r = CGRectMake((direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? 0 : startPoint.x,
-							  startPoint.y + (direction == PCStackMenuDirectionClockWiseDown || direction == PCStackMenuDirectionCounterClockWiseDown ? 0 : -itemHeight),
-							  (direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? startPoint.x : self.frame.size.width - startPoint.x,
-							  itemHeight);
+		CGPoint point = CGPointMake((direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? 0 : startPoint.x,
+									startPoint.y + (direction == PCStackMenuDirectionClockWiseDown || direction == PCStackMenuDirectionCounterClockWiseDown ? 0 : -itemHeight));
+		CGSize size = CGSizeMake((direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? startPoint.x : self.frame.size.width - startPoint.x,
+								 itemHeight);
+		CGRect r = CGRectMake(point.x, point.y, size.width, size.height);
 		r = [self convertRect:r fromView:parent];
 		NSString *title = (i < [titles count]) ? [titles objectAtIndex:i] : @"";
 		UIImage *image = (i < [images count]) ? [images objectAtIndex:i] : nil;
 		PCStackMenuItem *stackItem = [[PCStackMenuItem alloc] initWithFrame:r withTitle:title withImage:image alignment:(direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? UITextAlignmentRight : UITextAlignmentLeft];
+		if(direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseUp)
+			stackItem.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
+		else
+			stackItem.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin;
+		if(direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown)
+			stackItem.autoresizingMask |= UIViewAutoresizingFlexibleLeftMargin;
+		else
+			stackItem.autoresizingMask |= UIViewAutoresizingFlexibleRightMargin;
 		stackItem.alpha = 0.5;
 		stackItem.hidden = YES;
 		[self addSubview:stackItem];
@@ -256,14 +271,102 @@
 	return CGPointMake(x, y);
 }
 
+
+- (void)statusBarFrameOrOrientationChanged:(NSNotification *)notification
+{
+    [self rotateAccordingToStatusBarOrientationAndSupportedOrientations];
+}
+
+- (void)rotateAccordingToStatusBarOrientationAndSupportedOrientations
+{
+    UIInterfaceOrientation statusBarOrientation = [UIApplication sharedApplication].statusBarOrientation;
+    CGFloat angle = UIInterfaceOrientationAngleOfOrientation(statusBarOrientation);
+    CGFloat statusBarHeight = [[self class] getStatusBarHeight];
+	
+    CGAffineTransform transform = CGAffineTransformMakeRotation(angle);
+    CGRect frame = [[self class] rectInWindowBounds:self.window.bounds statusBarOrientation:statusBarOrientation statusBarHeight:statusBarHeight];
+	
+    [self setIfNotEqualTransform:transform frame:frame];
+}
+
+- (void)setIfNotEqualTransform:(CGAffineTransform)transform frame:(CGRect)frame
+{
+    if(!CGAffineTransformEqualToTransform(self.transform, transform))
+    {
+        self.transform = transform;
+    }
+    if(!CGRectEqualToRect(self.frame, frame))
+    {
+        self.frame = frame;
+    }
+}
+
++ (CGFloat)getStatusBarHeight
+{
+    UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+    if(UIInterfaceOrientationIsLandscape(orientation))
+    {
+        return [UIApplication sharedApplication].statusBarFrame.size.width;
+    }
+    else
+    {
+        return [UIApplication sharedApplication].statusBarFrame.size.height;
+    }
+}
+
++ (CGRect)rectInWindowBounds:(CGRect)windowBounds statusBarOrientation:(UIInterfaceOrientation)statusBarOrientation statusBarHeight:(CGFloat)statusBarHeight
+{
+    CGRect frame = windowBounds;
+    frame.origin.x += statusBarOrientation == UIInterfaceOrientationLandscapeLeft ? statusBarHeight : 0;
+    frame.origin.y += statusBarOrientation == UIInterfaceOrientationPortrait ? statusBarHeight : 0;
+    frame.size.width -= UIInterfaceOrientationIsLandscape(statusBarOrientation) ? statusBarHeight : 0;
+    frame.size.height -= UIInterfaceOrientationIsPortrait(statusBarOrientation) ? statusBarHeight : 0;
+    return frame;
+}
+
+CGFloat UIInterfaceOrientationAngleOfOrientation(UIInterfaceOrientation orientation)
+{
+    CGFloat angle;
+	
+    switch (orientation)
+    {
+        case UIInterfaceOrientationPortraitUpsideDown:
+            angle = M_PI;
+            break;
+        case UIInterfaceOrientationLandscapeLeft:
+            angle = -M_PI_2;
+            break;
+        case UIInterfaceOrientationLandscapeRight:
+            angle = M_PI_2;
+            break;
+        default:
+            angle = 0.0;
+            break;
+    }
+	
+    return angle;
+}
+
+UIInterfaceOrientationMask UIInterfaceOrientationMaskFromOrientation(UIInterfaceOrientation orientation)
+{
+    return 1 << orientation;
+}
+
 - (void)createOverlayWindow
 {
-	_overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+	CGRect rect = [UIScreen mainScreen].bounds;
+	_overlayWindow = [[UIWindow alloc] initWithFrame:rect];
 	_overlayWindow.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	_overlayWindow.backgroundColor = [UIColor clearColor];
 	
+	self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
 	[_overlayWindow makeKeyAndVisible];
 	[_overlayWindow addSubview:self];
+	
+	[self statusBarFrameOrOrientationChanged:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(statusBarFrameOrOrientationChanged:) name:UIApplicationWillChangeStatusBarFrameNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(statusBarFrameOrOrientationChanged:) name:UIApplicationDidChangeStatusBarFrameNotification object:nil];
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder
