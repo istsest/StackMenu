@@ -9,11 +9,27 @@
 #import "PCStackMenu.h"
 
 
+typedef enum
+{
+	PCStackMenuClockDirectionClockWise = 1,
+	PCStackMenuClockDirectionCounterClockWise
+} PCStackMenuClockDirection;
+
+typedef enum
+{
+	PCStackMenuClockAreaRight = 1,
+	PCStackMenuClockAreaLeft
+} PCStackMenuClockArea;
+
 @interface PCStackMenu ()
 {
 	UIWindow				*_overlayWindow;
 	NSMutableArray			*_items;
 	PCStackMenuDirection	_menuDirection;
+	
+	CGPoint						_startPoint;
+//	PCStackMenuClockDirection	_clockDirection;
+	PCStackMenuClockArea		_clockArea;
 }
 
 @end
@@ -113,6 +129,13 @@
 	[self clearHighlightWithExcept:nil];
 }
 
+- (CGRect)originalPositionforCircle:(CGRect)rect
+{
+	CGRect ret = rect;
+	ret.origin.x = _menuDirection == PCStackMenuDirectionHalfCircleRightArea ? _startPoint.x - ret.size.width : _startPoint.x;
+	ret.origin.y = _startPoint.y - ret.size.height / 2;
+	return ret;
+}
 
 - (void)show:(PCStackMenuBlock)block
 {
@@ -122,6 +145,8 @@
 	{
 		PCStackMenuItem *stackItem = [_items objectAtIndex:i];
 		stackItem.hidden = NO;
+		if(_menuDirection == PCStackMenuDirectionHalfCircleRightArea || _menuDirection == PCStackMenuDirectionHalfCircleLeftArea)
+			stackItem.frame = [self originalPositionforCircle:stackItem.frame];
 	}
 	
     [UIView animateWithDuration:0.2 animations:^{
@@ -129,10 +154,31 @@
 		{
 			PCStackMenuItem *stackItem = [_items objectAtIndex:i];
 			CGRect r = stackItem.frame;
-			r.origin.y += i * r.size.height * (_menuDirection == PCStackMenuDirectionClockWiseUp || _menuDirection == PCStackMenuDirectionCounterClockWiseUp ? -1 : 1);
+			if(_menuDirection == PCStackMenuDirectionHalfCircleRightArea ||_menuDirection == PCStackMenuDirectionHalfCircleLeftArea)
+			{
+				r.origin.x = (_clockArea == PCStackMenuClockAreaLeft) ? _startPoint.x - r.size.width : _startPoint.x;
+				r.origin.y += (int)(i - [_items count] / 2) * r.size.height;
+				if([_items count] % 2 == 0)
+					r.origin.y += r.size.height / 2;
+			}
+			else if(_menuDirection == PCStackMenuDirectionClockWiseUp || _menuDirection == PCStackMenuDirectionCounterClockWiseUp)
+			{
+				r.origin.y += i * r.size.height * -1;
+			}
+			else
+			{
+				r.origin.y += i * r.size.height * 1;
+			}
 			stackItem.frame = r;
 			CGPoint point = [self centerPointForRotation:stackItem];
-			stackItem.transform = CGAffineTransformMakeRotationAt(i * (_menuDirection == PCStackMenuDirectionClockWiseUp || _menuDirection == PCStackMenuDirectionClockWiseDown ? 2 : -2) * M_PI / 180, point);
+			if(_menuDirection == PCStackMenuDirectionHalfCircleRightArea)
+				stackItem.transform = CGAffineTransformMakeRotationAt((int)(i - [_items count] / 2) * 6 * M_PI / 180, point);
+			else if(_menuDirection == PCStackMenuDirectionHalfCircleLeftArea)
+				stackItem.transform = CGAffineTransformMakeRotationAt((int)(i - [_items count] / 2) * -6 * M_PI / 180, point);
+			else if(_menuDirection == PCStackMenuDirectionClockWiseUp || _menuDirection == PCStackMenuDirectionClockWiseDown)
+				stackItem.transform = CGAffineTransformMakeRotationAt(i * 2 * M_PI / 180, point);
+			else
+				stackItem.transform = CGAffineTransformMakeRotationAt(i * -2 * M_PI / 180, point);
 			stackItem.alpha = 1.0;
 		}
     } completion:^(BOOL finished) {
@@ -141,7 +187,7 @@
 
 - (void)dismissWithSelect:(PCStackMenuItem *)selectedItem
 {
-	int selectedIndex = [_items indexOfObject:selectedItem];
+	int selectedIndex = (int)[_items indexOfObject:selectedItem];
 	selectedItem.highlight = YES;
 	
     [UIView animateWithDuration:0.1 animations:^{
@@ -155,6 +201,8 @@
 			{
 				CGPoint point = [self centerPointForRotation:stackItem];
 				stackItem.transform = CGAffineTransformMakeRotationAt(0 * M_PI / 180, point);
+				if(_menuDirection == PCStackMenuDirectionHalfCircleRightArea || _menuDirection == PCStackMenuDirectionHalfCircleLeftArea)
+					r = [self originalPositionforCircle:r];
 				stackItem.frame = r;
 				stackItem.alpha = 0.2;
 			}
@@ -173,6 +221,8 @@
 			{
 				CGPoint point = [self centerPointForRotation:stackItem];
 				stackItem.transform = CGAffineTransformMakeRotationAt(0 * M_PI / 180, point);
+				if(_menuDirection == PCStackMenuDirectionHalfCircleRightArea || _menuDirection == PCStackMenuDirectionHalfCircleLeftArea)
+					r = [self originalPositionforCircle:r];
 				stackItem.frame = r;
 				stackItem.alpha = 0.5;
 			}
@@ -195,6 +245,8 @@
 				r = stackItem.frame;
 			CGPoint point = [self centerPointForRotation:stackItem];
 			stackItem.transform = CGAffineTransformMakeRotationAt(0 * M_PI / 180, point);
+			if(_menuDirection == PCStackMenuDirectionHalfCircleRightArea || _menuDirection == PCStackMenuDirectionHalfCircleLeftArea)
+				r = [self originalPositionforCircle:r];
 			stackItem.frame = r;
 			stackItem.alpha = 0.2;
 		}
@@ -233,28 +285,47 @@
 {
 	CGRect rect = [UIScreen mainScreen].bounds;
 	self = [self initWithFrame:rect];
-	_menuDirection = direction;
 	
-	int max = MAX([titles count], [images count]);
+	_menuDirection = direction;
+	_startPoint = [self convertPoint:startPoint fromView:parent];
+//	_clockDirection	=	(	direction == PCStackMenuDirectionClockWiseUp ||
+//							direction == PCStackMenuDirectionClockWiseDown ||
+//							direction == PCStackMenuDirectionHalfCircleLeftArea) ?
+//						PCStackMenuClockDirectionClockWise : PCStackMenuClockDirectionCounterClockWise;
+	
+	_clockArea		=	(	direction == PCStackMenuDirectionClockWiseUp ||
+							direction == PCStackMenuDirectionCounterClockWiseDown ||
+							direction == PCStackMenuDirectionHalfCircleLeftArea) ?
+						PCStackMenuClockAreaLeft : PCStackMenuClockAreaRight;
+	
+	int max = (int)MAX([titles count], [images count]);
 	for(int i = 0; i < max; i++)
 	{
-		CGPoint point = CGPointMake((direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? 0 : startPoint.x,
-									startPoint.y + (direction == PCStackMenuDirectionClockWiseDown || direction == PCStackMenuDirectionCounterClockWiseDown ? 0 : -itemHeight));
-		CGSize size = CGSizeMake((direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? startPoint.x : self.frame.size.width - startPoint.x,
+		CGFloat y = 0;
+		if(direction == PCStackMenuDirectionHalfCircleRightArea || direction == PCStackMenuDirectionHalfCircleLeftArea)
+			y = -itemHeight / 2;
+		else if(direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseUp)
+			y = -itemHeight;
+		CGPoint point = CGPointMake((_clockArea == PCStackMenuClockAreaLeft) ? 0 : startPoint.x, startPoint.y + y);
+		CGSize size = CGSizeMake((_clockArea == PCStackMenuClockAreaLeft) ? startPoint.x : self.frame.size.width - startPoint.x,
 								 itemHeight);
 		CGRect r = CGRectMake(point.x, point.y, size.width, size.height);
 		r = [self convertRect:r fromView:parent];
 		NSString *title = (i < [titles count]) ? [titles objectAtIndex:i] : @"";
 		UIImage *image = (i < [images count]) ? [images objectAtIndex:i] : nil;
-		PCStackMenuItem *stackItem = [[PCStackMenuItem alloc] initWithFrame:r withTitle:title withImage:image alignment:(direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown) ? UITextAlignmentRight : UITextAlignmentLeft];
+		
+		NSTextAlignment alignment = (_clockArea == PCStackMenuClockAreaRight) ? NSTextAlignmentLeft : NSTextAlignmentRight;
+		PCStackMenuItem *stackItem = [[PCStackMenuItem alloc] initWithFrame:r withTitle:title withImage:image alignment:alignment];
+		
 		if(direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseUp)
 			stackItem.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
 		else
 			stackItem.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin;
-		if(direction == PCStackMenuDirectionClockWiseUp || direction == PCStackMenuDirectionCounterClockWiseDown)
-			stackItem.autoresizingMask |= UIViewAutoresizingFlexibleLeftMargin;
-		else
-			stackItem.autoresizingMask |= UIViewAutoresizingFlexibleRightMargin;
+//		if(_clockArea == PCStackMenuClockAreaRight)
+//			stackItem.autoresizingMask |= UIViewAutoresizingFlexibleLeftMargin;
+//		else
+//			stackItem.autoresizingMask |= UIViewAutoresizingFlexibleRightMargin;
+		
 		stackItem.alpha = 0.5;
 		stackItem.hidden = YES;
 		[self addSubview:stackItem];
@@ -266,6 +337,9 @@
 
 - (CGPoint)centerPointForRotation:(PCStackMenuItem *)item
 {
+	if(_menuDirection == PCStackMenuDirectionHalfCircleRightArea || _menuDirection == PCStackMenuDirectionHalfCircleLeftArea)
+		return [item convertPoint:_startPoint fromView:self];
+
 	CGFloat x = _menuDirection == PCStackMenuDirectionClockWiseUp || _menuDirection == PCStackMenuDirectionCounterClockWiseDown ? self.frame.size.width : -self.frame.size.width;
 	CGFloat y = _menuDirection == PCStackMenuDirectionClockWiseDown || _menuDirection == PCStackMenuDirectionCounterClockWiseDown ? -item.frame.origin.y : self.frame.size.height - item.frame.origin.y;
 	return CGPointMake(x, y);

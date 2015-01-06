@@ -47,18 +47,18 @@
 	}
 }
 
-- (id)initWithFrame:(CGRect)frame withTitle:(NSString *)title withImage:(UIImage *)image alignment:(UITextAlignment)alignment
+- (id)initWithFrame:(CGRect)frame withTitle:(NSString *)title withImage:(UIImage *)image alignment:(NSTextAlignment)alignment
 {
     self = [self initWithFrame:frame];
     if (self)
 	{
-		CGRect rect = CGRectMake(alignment == UITextAlignmentLeft ? 0 : frame.size.width - frame.size.height, 0, frame.size.height, frame.size.height);
+		CGRect rect = CGRectMake(alignment == NSTextAlignmentLeft ? 0 : frame.size.width - frame.size.height, 0, frame.size.height, frame.size.height);
 		_stackIimageView = [[UIImageView alloc] initWithFrame:rect];
 		_stackIimageView.contentMode = UIViewContentModeScaleAspectFit;
 		_stackIimageView.image = image;
 		[self addSubview:_stackIimageView];
 
-		rect = CGRectMake(alignment == UITextAlignmentRight ? 0 : frame.size.height + 5, 0, frame.size.width - frame.size.height - 5, frame.size.height - 4);
+		rect = CGRectMake(alignment == NSTextAlignmentRight ? 0 : frame.size.height + 5, 0, frame.size.width - frame.size.height - 5, frame.size.height - 4);
 		_stackTitleLabel = [[UILabel alloc] initWithFrame:rect];
 		_stackTitleLabel.textAlignment = alignment;
 		_stackTitleLabel.font = [UIFont boldSystemFontOfSize:16];
@@ -67,19 +67,19 @@
 		_stackTitleLabel.shadowColor = [UIColor darkGrayColor];
 		_stackTitleLabel.shadowOffset = CGSizeMake(2, 2);
 		_stackTitleLabel.text = title;
-		CGSize labelSize = [title sizeWithFont:_stackTitleLabel.font];
+		CGSize labelSize = [title sizeWithAttributes:@{NSFontAttributeName:_stackTitleLabel.font}];
 		rect.size.width = labelSize.width + 10;
 		_stackTitleLabel.frame = rect;
 		[self addSubview:_stackTitleLabel];
 		
 		CGFloat width = labelSize.width + (_stackIimageView ? _stackIimageView.frame.size.width + 5 : 0);
-		if(alignment == UITextAlignmentRight)
+		if(alignment == NSTextAlignmentRight)
 			frame.origin.x += (frame.size.width - width) - 4;
 		frame.size.width = width + 8;
 		self.frame = frame;
 
 		rect = _stackIimageView.frame;
-		rect.origin.x = alignment == UITextAlignmentLeft ? 0 : frame.size.width - frame.size.height;
+		rect.origin.x = alignment == NSTextAlignmentLeft ? 0 : frame.size.width - frame.size.height;
 		_stackIimageView.frame = rect;
     }
     return self;

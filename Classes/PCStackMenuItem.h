@@ -10,7 +10,7 @@
 
 @interface PCStackMenuItem : UIView
 
-- (id)initWithFrame:(CGRect)frame withTitle:(NSString *)title withImage:(UIImage *)image alignment:(UITextAlignment)alignment;
+- (id)initWithFrame:(CGRect)frame withTitle:(NSString *)title withImage:(UIImage *)image alignment:(NSTextAlignment)alignment;
 
 @property (nonatomic)				BOOL			highlight;
 

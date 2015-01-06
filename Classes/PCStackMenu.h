@@ -14,7 +14,9 @@ typedef enum
 	PCStackMenuDirectionClockWiseUp = 1,
 	PCStackMenuDirectionClockWiseDown,
 	PCStackMenuDirectionCounterClockWiseUp,
-	PCStackMenuDirectionCounterClockWiseDown
+	PCStackMenuDirectionCounterClockWiseDown,
+	PCStackMenuDirectionHalfCircleLeftArea,
+	PCStackMenuDirectionHalfCircleRightArea
 } PCStackMenuDirection;
 
 typedef void (^PCStackMenuBlock)(NSInteger selectedMenuIndex);
